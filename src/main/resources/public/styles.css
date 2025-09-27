@@ -1,0 +1,49 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+h1 {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 32px 24px;
+    margin-top: 5px;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #333;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border: none;
+    color: #fff;
+    font-weight: 500;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+}
+
+#canvas {
+    background: #e9ecef;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+#blueprintsTable th, #blueprintsTable td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#totalPoints {
+    font-weight: bold;
+    color: #28a745;
+}
