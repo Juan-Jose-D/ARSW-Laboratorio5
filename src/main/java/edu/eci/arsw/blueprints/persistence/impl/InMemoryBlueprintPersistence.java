@@ -28,18 +28,70 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
     private final Map<Tuple<String,String>,Blueprint> blueprints=new ConcurrentHashMap<>();
 
     public InMemoryBlueprintPersistence() {
-        //load stub data - al menos 3 planos con 2 asociados al mismo autor
-        Point[] pts1 = new Point[]{new Point(200, 200), new Point(180, 180), new Point(160, 160)};
-        Point[] pts2 = new Point[]{new Point(300, 250), new Point(275, 230), new Point(250, 220)};
-        Point[] pts3 = new Point[]{new Point(400, 350), new Point(380, 340), new Point(360, 330)};
-        Point[] pts4 = new Point[]{new Point(150, 200), new Point(145, 200), new Point(320, 270)};
-        Point[] pts5 = new Point[]{new Point(100, 100), new Point(120, 120), new Point(140, 140)};
+        // Casa
+    Point[] casa = new Point[]{
+        new Point(100, 300), // base izquierda
+        new Point(300, 300), // base derecha
+        new Point(300, 200), // techo derecha
+        new Point(200, 100), // pico del techo
+        new Point(100, 200), // techo izquierda
+        new Point(100, 300)  // cierra la base
+    };
 
-        Blueprint bp1=new Blueprint("juan", "casa",pts1);
-        Blueprint bp2=new Blueprint("juan", "edificio",pts2);  // Segundo plano del mismo autor
-        Blueprint bp3=new Blueprint("maria", "parque",pts3);
-        Blueprint bp4=new Blueprint("carlos", "puente",pts4);
-        Blueprint bp5=new Blueprint("ana", "teatro",pts5);
+    // Estrella de 5 puntas
+    Point[] estrella = new Point[]{
+        new Point(200, 120),
+        new Point(218, 180),
+        new Point(280, 180),
+        new Point(230, 220),
+        new Point(250, 280),
+        new Point(200, 240),
+        new Point(150, 280),
+        new Point(170, 220),
+        new Point(120, 180),
+        new Point(182, 180),
+        new Point(200, 120)
+    };
+
+    // Triángulo
+    Point[] triangulo = new Point[]{
+        new Point(120, 300),
+        new Point(280, 300),
+        new Point(200, 150),
+        new Point(120, 300)
+    };
+
+    // Cuadrado
+    Point[] cuadrado = new Point[]{
+        new Point(120, 120),
+        new Point(280, 120),
+        new Point(280, 280),
+        new Point(120, 280),
+        new Point(120, 120)
+    };
+
+    // Círculo aproximado (polígono de 12 lados)
+    Point[] circulo = new Point[]{
+        new Point(200, 120),
+        new Point(243, 133),
+        new Point(273, 167),
+        new Point(280, 210),
+        new Point(266, 250),
+        new Point(233, 277),
+        new Point(200, 280),
+        new Point(167, 277),
+        new Point(134, 250),
+        new Point(120, 210),
+        new Point(127, 167),
+        new Point(157, 133),
+        new Point(200, 120)
+    };
+
+    Blueprint bp1 = new Blueprint("juan", "casa", casa);
+    Blueprint bp2 = new Blueprint("juan", "estrella", estrella);
+    Blueprint bp3 = new Blueprint("maria", "triangulo", triangulo);
+    Blueprint bp4 = new Blueprint("carlos", "cuadrado", cuadrado);
+    Blueprint bp5 = new Blueprint("ana", "circulo", circulo);
 
         blueprints.put(new Tuple<>(bp1.getAuthor(),bp1.getName()), bp1);
         blueprints.put(new Tuple<>(bp2.getAuthor(),bp2.getName()), bp2);
