@@ -132,11 +132,15 @@ public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
 
     @Override
     public void updateBlueprint (String author, String bpname, Blueprint updatedBlueprint)throws BlueprintNotFoundException{
-        Blueprint currentBlue = getBlueprint(author, bpname);
-        if (currentBlue == null) {
+        Tuple<String, String> key = new Tuple<>(author, bpname);
+        // Construir una nueva instancia para evitar mutación in-place
+        Blueprint replacement = new Blueprint(author, bpname,
+                updatedBlueprint.getPoints().toArray(new Point[0]));
+
+        Blueprint result = blueprints.computeIfPresent(key, (k, existing) -> replacement);
+        if (result == null) {
+            // Si no existía el plano, computeIfPresent no ejecuta el mapeo
             throw new BlueprintNotFoundException(BlueprintNotFoundException.NONEXISTENT);
-        } else {
-            currentBlue.setPoints(updatedBlueprint.getPoints());
         }
     }
 

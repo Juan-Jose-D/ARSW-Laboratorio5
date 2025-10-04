@@ -97,19 +97,38 @@ El backend implementa una API REST completa para la gestión de planos arquitect
 
 ### Análisis de concurrencia
 
-**Problemas identificados y soluciones implementadas:**
+Este API atiende múltiples peticiones concurrentes. A continuación, se documentan las posibles condiciones de carrera detectadas y la solución aplicada.
 
-Se modificaron bastantes cosas respecto al laboratorio 3 para manejar correctamente la concurrencia. 
+1) Posibles condiciones de carrera
 
+- Lectura mientras se actualiza: una petición GET puede leer un `Blueprint` al mismo tiempo que otra petición PUT lo actualiza. Si el objeto se muta in-place (por ejemplo, modificando la lista de puntos), se corre el riesgo de observar estados intermedios o lanzar excepciones como `ConcurrentModificationException`.
+- Inserción duplicada: múltiples POST con el mismo autor/nombre pueden intentar registrar el mismo plano simultáneamente.
 
-El API está diseñado para ser thread-safe y eficiente, usando estructuras concurrentes, operaciones atómicas e inmutabilidad, permitiendo múltiples peticiones concurrentes de manera segura.
+2) Regiones críticas
 
-**Estrategias aplicadas:**
+- Persistencia en memoria (mapa de `Tuple(author,name) -> Blueprint`): la inserción y la actualización de un plano específico.
+- Objeto `Blueprint`: si se muta luego de ser publicado en el mapa compartido, todos los lectores pueden observar dicha mutación.
 
-- Uso de collections thread-safe (ConcurrentHashMap).
-- Operaciones atómicas (putIfAbsent, get).
-- Inmutabilidad (copias en filtros y servicios).
-- Evitar sincronización pesada (no synchronized, no locks).
+3) Solución aplicada
+
+- Estructura thread-safe: se usa `ConcurrentHashMap` para la colección principal.
+- Operaciones atómicas para crear: `saveBlueprint` utiliza `putIfAbsent`, lo que hace la inserción condicional atómica y evita condiciones de carrera en creación.
+- Operaciones atómicas para actualizar: `updateBlueprint` deja de mutar el objeto existente y ahora reemplaza la entrada mediante `computeIfPresent` con una NUEVA instancia de `Blueprint` construida a partir de los puntos recibidos. Esto asegura que la actualización sea atómica y evita estados intermedios visibles para otros hilos.
+- Evitar mutación compartida: los servicios/filtros crean copias para filtrar (no modifican el objeto original). Así, los lectores no ven cambios parciales.
+
+4) Alternativas consideradas y por qué no se usaron
+
+- Bloques `synchronized` amplios: sincronizar toda la persistencia degradaría el desempeño bajo carga. Al usar primitivas atómicas del `ConcurrentHashMap` y objetos reemplazados por nuevas instancias, se logra seguridad sin contención global.
+- Locks por clave: agregan complejidad innecesaria dado que el mapa ya ofrece operaciones atómicas que cubren este caso de uso.
+
+5) Resultado
+
+Con las medidas anteriores:
+- No hay ventanas de tiempo donde un lector observe un plano en mitad de una actualización.
+- Se evita la duplicidad en altas concurrentes.
+- No se bloquea el mapa completo, manteniendo buena escalabilidad.
+
+Notas de mejora futura: Llevar el modelo `Blueprint` hacia inmutabilidad estricta (campos finales y listas inmodificables) eliminaría completamente la posibilidad de mutaciones compartidas incluso por error. Actualmente los servicios y filtros ya trabajan con copias para no mutar los originales, y la persistencia actualiza por reemplazo atómico.
 
 
 
