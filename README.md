@@ -83,7 +83,13 @@ Al ejecutar el backend el front estará disponible en `http://localhost:8080`.
 - **Persistencia en memoria:** Los datos se almacenan temporalmente en memoria, sin base de datos.
 
 ---
+## Capturas de pantalla
 
+![alt text](/img/image.png)
+
+![alt text](/img/image-1.png)
+
+---
 ## API REST para gestión de planos
 
 El backend implementa una API REST completa para la gestión de planos arquitectónicos, cumpliendo con los siguientes puntos:
