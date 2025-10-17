@@ -19,6 +19,7 @@ var apiclient = (function () {
             });
         },
 
+
         createBlueprint: function (blueprint, callback) {
             $.ajax({
                 url: apiUrl,
@@ -30,6 +31,34 @@ var apiclient = (function () {
                 },
                 error: function (error) {
                     console.error("Error al crear el plano: ", error);
+                }
+            });
+        },
+
+        updateBlueprint: function (blueprint, callback) {
+            $.ajax({
+                url: apiUrl + "/" + blueprint.author + "/" + blueprint.name,
+                type: "PUT",
+                data: JSON.stringify(blueprint),
+                contentType: "application/json",
+                success: function (data) {
+                    callback(data);
+                },
+                error: function (error) {
+                    console.error("Error al actualizar el plano: ", error);
+                }
+            });
+        },
+
+        deleteBlueprint: function (author, name, callback) {
+            $.ajax({
+                url: apiUrl + "/" + author + "/" + name,
+                type: "DELETE",
+                success: function (data) {
+                    callback(data);
+                },
+                error: function (error) {
+                    console.error("Error al borrar el plano: ", error);
                 }
             });
         },

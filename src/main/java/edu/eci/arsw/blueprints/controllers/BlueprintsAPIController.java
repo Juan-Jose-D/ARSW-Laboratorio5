@@ -98,4 +98,17 @@ public class BlueprintsAPIController {
             return new ResponseEntity<>("Plano no encontrado: " + author + "/" + bpname, HttpStatus.NOT_FOUND);
         }
     }
+
+    @RequestMapping(value = "/{author}/{bpname}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteBlueprint(
+            @PathVariable String author,
+            @PathVariable String bpname) {
+        try {
+            blueprintsServices.deleteBlueprint(author, bpname);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (BlueprintNotFoundException e) {
+            Logger.getLogger(BlueprintsAPIController.class.getName()).log(Level.SEVERE, null, e);
+            return new ResponseEntity<>("Plano no encontrado: " + author + "/" + bpname, HttpStatus.NOT_FOUND);
+        }
+    }
 }

@@ -75,19 +75,26 @@ Al ejecutar el backend el front estará disponible en `http://localhost:8080`.
 
 ## Funcionalidades
 
-- **Registrar planos:** Desde la web, puedes crear nuevos planos y autores.
+- **Registrar planos:** Desde la web, puedes crear nuevos planos en el canvas.
 - **Consultar planos:** Buscar planos por autor.
 - **Visualizar planos:** Ver los puntos del plano en un canvas interactivo.
 - **Listar autores:** Ver todos los autores registrados y sus planos.
 - **Filtrar planos:** El backend aplica filtros antes de retornar los datos.
 - **Persistencia en memoria:** Los datos se almacenan temporalmente en memoria, sin base de datos.
+- **Eliminar:** Se puede eliminar los planos existentes.
 
 ---
 ## Capturas de pantalla
 
 ![alt text](/img/image.png)
 
-![alt text](/img/image-1.png)
+Se pueden ver algunos blueprints ya creados.
+
+![alt text](/img/image2.png)
+
+Y crear y guardar planos nuevos
+
+![alt text](/img/image1.png)
 
 ---
 ## API REST para gestión de planos
@@ -121,22 +128,12 @@ Este API atiende múltiples peticiones concurrentes. A continuación, se documen
 - Operaciones atómicas para crear: `saveBlueprint` utiliza `putIfAbsent`, lo que hace la inserción condicional atómica y evita condiciones de carrera en creación.
 - Operaciones atómicas para actualizar: `updateBlueprint` deja de mutar el objeto existente y ahora reemplaza la entrada mediante `computeIfPresent` con una NUEVA instancia de `Blueprint` construida a partir de los puntos recibidos. Esto asegura que la actualización sea atómica y evita estados intermedios visibles para otros hilos.
 - Evitar mutación compartida: los servicios/filtros crean copias para filtrar (no modifican el objeto original). Así, los lectores no ven cambios parciales.
+- 
 
-4) Alternativas consideradas y por qué no se usaron
-
-- Bloques `synchronized` amplios: sincronizar toda la persistencia degradaría el desempeño bajo carga. Al usar primitivas atómicas del `ConcurrentHashMap` y objetos reemplazados por nuevas instancias, se logra seguridad sin contención global.
-- Locks por clave: agregan complejidad innecesaria dado que el mapa ya ofrece operaciones atómicas que cubren este caso de uso.
-
-5) Resultado
-
-Con las medidas anteriores:
-- No hay ventanas de tiempo donde un lector observe un plano en mitad de una actualización.
-- Se evita la duplicidad en altas concurrentes.
-- No se bloquea el mapa completo, manteniendo buena escalabilidad.
-
-Notas de mejora futura: Llevar el modelo `Blueprint` hacia inmutabilidad estricta (campos finales y listas inmodificables) eliminaría completamente la posibilidad de mutaciones compartidas incluso por error. Actualmente los servicios y filtros ya trabajan con copias para no mutar los originales, y la persistencia actualiza por reemplazo atómico.
-
-
+### Canvas interactivo y modularidad
+- El canvas ahora captura eventos de tipo PointerEvent (mouse y touch), permitiendo agregar puntos al plano de forma intuitiva. La lógica de eventos está modularizada en el frontend.
+- Al crear un nuevo blueprint, se solicita el nombre del autor y el nombre del plano. Si el autor no existe, se agrega automáticamente y aparece en la lista de autores.
+- Después se puede crear el blueprint mediante puntos(clicks) en el canvas.
 
 
 ### Endpoints principales
@@ -146,6 +143,7 @@ Notas de mejora futura: Llevar el modelo `Blueprint` hacia inmutabilidad estrict
 - `GET /blueprints/{author}/{bpname}` — Consulta un plano específico
 - `POST /blueprints` — Crea un nuevo plano
 - `PUT /blueprints/{author}/{bpname}` — Actualiza un plano existente
+- `DELETE /blueprints/{author}/{bpname}` - Eliminar planos.
 
 
 
@@ -156,33 +154,8 @@ Notas de mejora futura: Llevar el modelo `Blueprint` hacia inmutabilidad estrict
 1. **Listar autores:** Haz clic en "List all authors" para ver los autores disponibles.
 2. **Consultar planos:** Ingresa el nombre de un autor y haz clic en "Get blueprints" para ver sus planos.
 3. **Visualizar plano:** Haz clic en "Open" en la tabla para ver el plano en el canvas.
-4. **Crear plano:** Completa el formulario y haz clic en "Create Blueprint". El formato de puntos es `x1,y1;x2,y2;...`.
-
-
----
-
-
-## Filtros de Planos
-
-El backend aplica uno de dos filtros configurables:
-- **Redundancia:** Elimina puntos consecutivos repetidos.
-- **Submuestreo:** Elimina 1 de cada 2 puntos.
-
-### ¿Cómo alternar el filtro?
-En el archivo `BlueprintsServices.java`, la inyección del filtro se realiza con:
-```java
-@Autowired
-public BlueprintsServices(BlueprintsPersistence bpp,
-	@Qualifier("redundancyFilter") BlueprintFilter blueprintFilter) {
-	this.bpp = bpp;
-	this.blueprintFilter = blueprintFilter;
-}
-```
-Para usar el filtro de submuestreo, cambia el qualifier a:
-```java
-@Qualifier("subsamplingFilter")
-```
-Guarda el archivo y reinicia el back para aplicar el cambio.
+4. **Crear plano:** Escribe el nombre del autor y el nombre del blueprint y dibujalo en el canvas, un punto por click. 
+5. **Guardar el plano creado:** Guardar el plano creado manualmente mediante el botón Save/Update.
 
 
 ---
@@ -200,12 +173,14 @@ Incluyen pruebas de persistencia y de los filtros.
 
 ## Criterios de evaluación cumplidos
 
-- Diseño desacoplado y uso de inyección de dependencias con Spring.
-- Todos los recursos REST en un solo bean.
-- Códigos HTTP correctos en todas las respuestas.
-- Persistencia y operaciones thread-safe.
-- Análisis de concurrencia documentado y aplicado.
-- Funcionalidad completa de la API REST según el enunciado.
+- **Funcional**
+  - Carga y dibujo de planos: El frontend carga los planos desde el backend y los dibuja correctamente en el canvas, usando eventos pointer (mouse/touch).
+  - Actualización de la lista: Al crear y guardar un nuevo plano (POST/PUT), la lista de planos y autores se actualiza automáticamente, mostrando el nuevo plano y autor si corresponde.
+  - Modificación de planos: Puedes abrir un plano, agregarle puntos en el canvas y guardarlo (PUT), actualizando el backend y la lista.
+  - Cálculo de puntos: El total de puntos del usuario se calcula y muestra correctamente, usando map/reduce.
+- **Diseño**
+  - Sin ciclos tradicionales: El cálculo de puntos y la transformación de listas usan exclusivamente operaciones de map/reduce, no for/while.
+  - Promesas en actualización y borrado: Los flujos de guardar (PUT/POST) y borrar (DELETE) planos usan promesas para asegurar que el cálculo de puntaje y la actualización de la lista se realicen solo después de que el backend confirme la operación. No hay callbacks anidados, sino encadenamiento de promesas.
 
 ---
 
